@@ -9,7 +9,8 @@ make
 ```
 
 ## screenshot
-![](screenshot.jpg)
+![](screenshot.jpg)  
+![](screenshot_android.jpg)
 
 ## reference  
 https://github.com/Tencent/ncnn  
