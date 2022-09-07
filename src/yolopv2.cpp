@@ -419,6 +419,8 @@ int main(int argc, char** argv)
         return -1;
     }
     
+    cv::resize(m, m, cv::Size(1280,720), 0, 0, 1);
+    
     std::vector<Object> objects;
     ncnn::Mat da_seg_mask, ll_seg_mask;
     detect_yolopv2(m, objects, da_seg_mask, ll_seg_mask);
