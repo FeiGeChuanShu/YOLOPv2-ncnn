@@ -20,7 +20,67 @@ struct Object
     int label;
     float prob;
 };
+static void slice(const ncnn::Mat& in, ncnn::Mat& out, int start, int end, int axis)
+{
+    ncnn::Option opt;
+    opt.num_threads = 4;
+    opt.use_fp16_storage = false;
+    opt.use_packing_layout = false;
 
+    ncnn::Layer* op = ncnn::create_layer("Crop");
+
+    // set param
+    ncnn::ParamDict pd;
+
+    ncnn::Mat axes = ncnn::Mat(1);
+    axes.fill(axis);
+    ncnn::Mat ends = ncnn::Mat(1);
+    ends.fill(end);
+    ncnn::Mat starts = ncnn::Mat(1);
+    starts.fill(start);
+    pd.set(9, starts);// start
+    pd.set(10, ends);// end
+    pd.set(11, axes);//axes
+
+    op->load_param(pd);
+
+    op->create_pipeline(opt);
+
+    // forward
+    op->forward(in, out, opt);
+
+    op->destroy_pipeline(opt);
+
+    delete op;
+}
+static void interp(const ncnn::Mat& in, const float& scale, const int& out_w, const int& out_h, ncnn::Mat& out)
+{
+    ncnn::Option opt;
+    opt.num_threads = 4;
+    opt.use_fp16_storage = false;
+    opt.use_packing_layout = false;
+
+    ncnn::Layer* op = ncnn::create_layer("Interp");
+
+    // set param
+    ncnn::ParamDict pd;
+    pd.set(0, 2);// resize_type
+    pd.set(1, scale);// height_scale
+    pd.set(2, scale);// width_scale
+    pd.set(3, out_h);// height
+    pd.set(4, out_w);// width
+
+    op->load_param(pd);
+
+    op->create_pipeline(opt);
+
+    // forward
+    op->forward(in, out, opt);
+
+    op->destroy_pipeline(opt);
+
+    delete op;
+}
 static inline float intersection_area(const Object& a, const Object& b)
 {
     cv::Rect_<float> inter = a.rect & b.rect;
@@ -360,10 +420,16 @@ static int detect_yolopv2( cv::Mat& bgr, std::vector<Object>& objects, ncnn::Mat
 
         proposals.insert(proposals.end(), objects32.begin(), objects32.end());
     }
-    
+    ncnn::Mat da, ll;
     {
-        ex.extract("da", da_seg_mask_);
-        ex.extract("ll", ll_seg_mask_);
+        ex.extract("677", da);
+        ex.extract("769", ll);
+        slice(da, da_seg_mask_, hpad / 2, in_pad.h - hpad / 2, 1);
+        slice(ll, ll_seg_mask_, hpad / 2, in_pad.h - hpad / 2, 1);
+        slice(da_seg_mask_, da_seg_mask_, wpad / 2, in_pad.w - wpad / 2, 2);
+        slice(ll_seg_mask_, ll_seg_mask_, wpad / 2, in_pad.w - wpad / 2, 2);
+        interp(da_seg_mask_, 1 / scale, 0, 0, da_seg_mask_);
+        interp(ll_seg_mask_, 1 / scale, 0, 0, ll_seg_mask_);
     }
 
     // sort all proposals by score from highest to lowest
@@ -418,8 +484,6 @@ int main(int argc, char** argv)
         fprintf(stderr, "cv::imread %s failed\n", imagepath);
         return -1;
     }
-    
-    cv::resize(m, m, cv::Size(1280,720), 0, 0, 1);
     
     std::vector<Object> objects;
     ncnn::Mat da_seg_mask, ll_seg_mask;

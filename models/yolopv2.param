@@ -1,5 +1,5 @@
 7767517
-360 415
+356 411
 Input                    input.101                0 1 images
 MemoryData               model.105.ia.0.implicit  0 1 model.105.ia.0.implicit 0=1 1=1 2=256
 MemoryData               model.105.ia.1.implicit  0 1 model.105.ia.1.implicit 0=1 1=1 2=512
@@ -356,7 +356,3 @@ Reshape                  Reshape_573              1 1 onnx::SequenceConstruct_60
 Permute                  Transpose_574            1 1 1178 det1 0=1
 Reshape                  Reshape_573              1 1 onnx::SequenceConstruct_605 1179 0=-1 1=85 2=3
 Permute                  Transpose_574            1 1 1179 det2 0=1
-Crop                     Slice_4                  1 1 677 2000 -23309=1,12 -23310=1,372 -23311=1,1
-Crop                     Slice_9                  1 1 769 2001 -23309=1,12 -23310=1,372 -23311=1,1
-Interp                   Resize_2000              1 1 2000 da 0=2 1=2.000000e+00 2=2.000000e+00
-Interp                   Resize_2001              1 1 2001 ll 0=2 1=2.000000e+00 2=2.000000e+00
